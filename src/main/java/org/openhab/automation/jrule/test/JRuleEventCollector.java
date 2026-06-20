@@ -127,6 +127,14 @@ public class JRuleEventCollector implements EventPublisher {
     }
 
     /**
+     * Returns all collected state-update events for the given item.
+     */
+    public List<Container> getUpdateEvents(String itemName) {
+        return events.stream().filter(e -> e.event instanceof ItemStateEvent)
+                .filter(e -> e.event.getTopic().equals(stateTopic(itemName))).collect(Collectors.toList());
+    }
+
+    /**
      * Returns {@code true} if the most recent command event for the given item
      * matches the given command value.
      */

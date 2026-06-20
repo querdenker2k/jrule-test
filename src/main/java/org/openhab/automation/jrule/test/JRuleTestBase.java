@@ -190,6 +190,27 @@ public abstract class JRuleTestBase<R extends JRule> {
         mockPersistence(() -> PersistenceExtensions.previousState(any(Item.class), isNull()), itemName, value);
     }
 
+    /**
+     * Stubs a {@link PersistenceExtensions} static call so that it returns a raw
+     * {@link State} (not a {@link HistoricItem}) for {@code itemName}. Use this
+     * for methods like {@code averageSince} that return a {@code State} directly.
+     */
+    protected void mockPersistenceState(MockedStatic.Verification verification, String itemName, JRuleValue value) {
+        persistenceExtensions.when(verification).thenAnswer(invocation -> {
+            Item item = invocation.getArgument(0, Item.class);
+            if (item.getName().equals(itemName)) {
+                return value.toOhState();
+            }
+            throw new IllegalStateException("not mocked: " + item.getName());
+        });
+    }
+
+    /** Convenience stub for {@link PersistenceExtensions#averageSince(Item, ZonedDateTime, String)}. */
+    protected void mockAverageSince(String itemName, JRuleValue value) {
+        mockPersistenceState(() -> PersistenceExtensions.averageSince(any(Item.class), any(ZonedDateTime.class),
+                isNull(String.class)), itemName, value);
+    }
+
     private static class OhHistoricItem implements HistoricItem {
         private final JRuleValue value;
 
@@ -254,6 +275,15 @@ public abstract class JRuleTestBase<R extends JRule> {
     // -------------------------------------------------------------------------
     // Update assertions
     // -------------------------------------------------------------------------
+
+    /**
+     * Asserts that no {@code postUpdate} was recorded for {@code itemName}.
+     */
+    protected void assertNoUpdateSent(String itemName) {
+        Assertions.assertTrue(eventCollector.getUpdateEvents(itemName).isEmpty(),
+                "Expected no updates to be posted to item '" + itemName + "', but "
+                        + eventCollector.getUpdateEvents(itemName).size() + " were recorded");
+    }
 
     /**
      * Asserts that at least one {@code postUpdate} call for {@code itemName}
