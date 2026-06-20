@@ -1,0 +1,109 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-v4_0_0.xsd">
+
+  <modelVersion>4.0.0</modelVersion>
+
+  <parent>
+    <groupId>org.openhab.addons.bundles</groupId>
+    <artifactId>org.openhab.addons.reactor.bundles</artifactId>
+    <version>5.1.0</version>
+    <relativePath/>
+  </parent>
+
+  <groupId>org.openhab.automation.jrule</groupId>
+  <artifactId>jrule-test</artifactId>
+  <version>5.1.0-SNAPSHOT</version>
+  <packaging>jar</packaging>
+  <name>JRule :: Test Utilities</name>
+  <description>Test utilities for unit testing JRule rules without a running OpenHAB instance</description>
+
+  <dependencies>
+    <!-- JRule addon: provides JRule API (rules, items, annotations, internal engine) -->
+    <dependency>
+      <groupId>org.openhab.addons.bundles</groupId>
+      <artifactId>org.openhab.automation.jrule</artifactId>
+      <version>5.1.0-SNAPSHOT</version>
+    </dependency>
+
+    <!-- compile scope: JRuleTestBase uses Mockito directly for spy/mock setup -->
+    <dependency>
+      <groupId>org.mockito</groupId>
+      <artifactId>mockito-core</artifactId>
+      <version>5.19.0</version>
+    </dependency>
+
+    <!-- compile scope: JRuleTestBase has @BeforeAll/@AfterAll annotations -->
+    <dependency>
+      <groupId>org.junit.jupiter</groupId>
+      <artifactId>junit-jupiter-api</artifactId>
+      <version>5.10.2</version>
+      <scope>compile</scope>
+    </dependency>
+
+    <dependency>
+      <groupId>org.awaitility</groupId>
+      <artifactId>awaitility</artifactId>
+      <version>4.3.0</version>
+    </dependency>
+  </dependencies>
+
+  <repositories>
+    <repository>
+      <snapshots>
+        <enabled>false</enabled>
+      </snapshots>
+      <id>openhab-release</id>
+      <url>https://openhab.jfrog.io/artifactory/libs-release</url>
+    </repository>
+    <repository>
+      <snapshots>
+        <enabled>true</enabled>
+      </snapshots>
+      <id>openhab-snapshot</id>
+      <url>https://openhab.jfrog.io/artifactory/libs-snapshot</url>
+    </repository>
+  </repositories>
+
+  <build>
+    <plugins>
+      <plugin>
+        <groupId>org.commonjava.maven.plugins</groupId>
+        <artifactId>directory-maven-plugin</artifactId>
+        <executions>
+          <execution>
+            <id>directories</id>
+            <phase>none</phase>
+          </execution>
+        </executions>
+      </plugin>
+      <plugin>
+        <groupId>org.openhab.tools.sat</groupId>
+        <artifactId>sat-plugin</artifactId>
+        <executions>
+          <execution>
+            <id>sat-all</id>
+            <phase>none</phase>
+          </execution>
+        </executions>
+      </plugin>
+    </plugins>
+  </build>
+
+  <!--
+    The "standalone" profile inherited from the OpenHAB parent is activeByDefault.
+    Adding an always-active profile here deactivates the inherited activeByDefault.
+    This prevents the SAT plugin from running (it requires tools/ paths that don't
+    exist in this standalone project).
+  -->
+  <profiles>
+    <profile>
+      <id>standalone-override</id>
+      <activation>
+        <property>
+          <name>!disable-standalone-override</name>
+        </property>
+      </activation>
+    </profile>
+  </profiles>
+</project>
