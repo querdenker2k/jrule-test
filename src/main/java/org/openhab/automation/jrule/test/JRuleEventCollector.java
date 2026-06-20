@@ -14,17 +14,28 @@ package org.openhab.automation.jrule.test;
 
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 import org.openhab.core.events.Event;
 import org.openhab.core.events.EventPublisher;
+import org.openhab.core.items.GenericItem;
 import org.openhab.core.items.events.ItemCommandEvent;
 import org.openhab.core.items.events.ItemStateEvent;
+import org.openhab.core.types.Command;
+import org.openhab.core.types.State;
 
 /**
  * Collects all item events produced by rules (via sendCommand/postUpdate) so
  * tests can assert on what the rule sent to the event bus.
+ *
+ * <p>
+ * Also tracks the current state of registered items: whenever a command or
+ * state-update event is received, the corresponding item's state is updated.
+ * This allows {@link JRuleTestBase#assertItemHasState} to reflect the effect
+ * of sendCommand/postUpdate calls without a running OpenHAB binding.
  *
  * <p>
  * An instance is available as {@link JRuleTestBase#eventCollector} after
@@ -33,10 +44,48 @@ import org.openhab.core.items.events.ItemStateEvent;
 public class JRuleEventCollector implements EventPublisher {
 
     private final List<Container> events = new ArrayList<>();
+    private final Map<String, GenericItem> items = new LinkedHashMap<>();
 
     @Override
     public void post(Event event) throws IllegalArgumentException, IllegalStateException {
         events.add(new Container(ZonedDateTime.now(), event));
+        if (event instanceof ItemCommandEvent commandEvent) {
+            Command command = commandEvent.getItemCommand();
+            if (command instanceof State state) {
+                GenericItem item = items.get(commandEvent.getItemName());
+                if (item != null) {
+                    item.setState(state);
+                }
+            }
+        } else if (event instanceof ItemStateEvent stateEvent) {
+            GenericItem item = items.get(stateEvent.getItemName());
+            if (item != null) {
+                item.setState(stateEvent.getItemState());
+            }
+        }
+    }
+
+    /**
+     * Registers an item so that its state is automatically updated when the
+     * rule sends a command or posts an update for it.
+     * Called automatically by {@link JRuleTestBase#registerItem}.
+     */
+    public void registerItem(GenericItem item) {
+        items.put(item.getName(), item);
+    }
+
+    /**
+     * Returns the current state of a registered item, reflecting any
+     * sendCommand or postUpdate calls the rule has made so far.
+     *
+     * @throws IllegalArgumentException if the item was not registered
+     */
+    public State getItemState(String itemName) {
+        GenericItem item = items.get(itemName);
+        if (item == null) {
+            throw new IllegalArgumentException("Item not registered: " + itemName);
+        }
+        return item.getState();
     }
 
     /**
@@ -89,7 +138,7 @@ public class JRuleEventCollector implements EventPublisher {
                 .isPresent();
     }
 
-    /** Removes all collected events. Useful when asserting in multiple steps within one test. */
+    /** Removes all collected events. Item registrations and their current states are preserved. */
     public void clear() {
         events.clear();
     }
