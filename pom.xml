@@ -18,6 +18,19 @@
   <name>JRule :: Test Utilities</name>
   <description>Test utilities for unit testing JRule rules without a running OpenHAB instance</description>
 
+  <distributionManagement>
+    <repository>
+      <id>github</id>
+      <name>GitHub Packages</name>
+      <url>https://maven.pkg.github.com/querdenker2k/jrule-test</url>
+    </repository>
+    <snapshotRepository>
+      <id>github</id>
+      <name>GitHub Packages</name>
+      <url>https://maven.pkg.github.com/querdenker2k/jrule-test</url>
+    </snapshotRepository>
+  </distributionManagement>
+
   <dependencies>
     <!-- JRule addon: provides JRule API (rules, items, annotations, internal engine) -->
     <dependency>

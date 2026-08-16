@@ -1,0 +1,47 @@
+name: Java CI with Maven
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+          cache: 'maven'
+          server-id: 'github'
+          server-username: MAVEN_USERNAME
+          server-password: MAVEN_PASSWORD
+
+      - name: Build and Test with Maven
+        run: mvn --batch-mode verify
+
+      - name: Upload Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: jrule-test-artifacts
+          path: |
+            target/*.jar
+            target/feature/feature.xml
+
+      - name: Publish to GitHub Packages
+        if: github.event_name != 'pull_request'
+        run: mvn --batch-mode deploy -DskipTests
+        env:
+          MAVEN_USERNAME: ${{ github.actor }}
+          MAVEN_PASSWORD: ${{ secrets.GITHUB_TOKEN }}
