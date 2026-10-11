@@ -70,6 +70,7 @@ import org.openhab.core.persistence.HistoricItem;
 import org.openhab.core.persistence.extensions.PersistenceExtensions;
 import org.openhab.core.scheduler.CronScheduler;
 import org.openhab.core.scheduler.ScheduledCompletableFuture;
+import org.openhab.core.types.Command;
 import org.openhab.core.types.State;
 import org.openhab.core.types.UnDefType;
 
@@ -414,10 +415,12 @@ public abstract class JRuleTestBase<R extends JRule> {
 
     /** Fires an item command event. */
     protected void fireCommand(String itemName, JRuleValue command) {
-        if (trackedItems.containsKey(itemName)) {
-            trackedItems.get(itemName).setState(command.toOhState());
+        Command ohCommand = command.toOhCommand();
+        // command-only types such as INCREASE/DECREASE have no state counterpart and leave the state alone
+        if (trackedItems.containsKey(itemName) && ohCommand instanceof State state) {
+            trackedItems.get(itemName).setState(state);
         }
-        fireEvents(false, List.of(ItemEventFactory.createCommandEvent(itemName, command.toOhCommand())));
+        fireEvents(false, List.of(ItemEventFactory.createCommandEvent(itemName, ohCommand)));
     }
 
     /** Fires a state-updated event. */
